@@ -729,7 +729,7 @@ static void RCTUpdateShadowPathForView(RCTView *view)
       return NSDragOperationGeneric;
     }
   }
-  if ( [[pboard types] containsObject:NSFilenamesPboardType] ) {
+  if ( [[pboard types] containsObject:NSFilenamesPboardType] ||  [[pboard types] containsObject:NSTIFFPboardType] ) {
     if (sourceDragMask & NSDragOperationLink) {
       return NSDragOperationLink;
     } else if (sourceDragMask & NSDragOperationCopy) {
@@ -746,11 +746,25 @@ static void RCTUpdateShadowPathForView(RCTView *view)
 
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
   NSPasteboard *pboard = [sender draggingPasteboard];
-
+  
   if ( [[pboard types] containsObject:NSFilenamesPboardType] ) {
     NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
     _onDrop(@{@"files": files });
   }
+  /* https://developer.apple.com/documentation/appkit/nsimage/1519952-initwithpasteboard?language=objc */
+  else if ( [[pboard types] containsObject:NSTIFFPboardType] ) {
+    NSArray *keys = [NSArray arrayWithObject:@"NSImageCompressionFactor"];
+    NSArray *objects = [NSArray arrayWithObject:@"1.0"];
+    NSDictionary *dictionary = [NSDictionary dictionaryWithObjects:objects forKeys:keys];
+    
+    NSImage *image = [[NSImage alloc] initWithPasteboard:pboard];
+    NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithData:[image TIFFRepresentation]];
+    NSData *tiff_data = [imageRep representationUsingType:NSPNGFileType properties:dictionary];
+    NSString *base64 = [tiff_data base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithCarriageReturn];
+    
+    _onDrop(@{ @"base64": base64 });
+  }
+
   return YES;
 }
 
