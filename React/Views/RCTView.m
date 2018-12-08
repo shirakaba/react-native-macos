@@ -762,7 +762,7 @@ static void RCTUpdateShadowPathForView(RCTView *view)
     NSData *tiff_data = [imageRep representationUsingType:NSPNGFileType properties:dictionary];
     NSString *base64 = [tiff_data base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithCarriageReturn];
     
-    _onDrop(@{ @"base64": base64 });
+    _onDrop(@{ @"base64": base64, @"source": [NSURL URLFromPasteboard:pboard].absoluteString });
   }
 
   return YES;
